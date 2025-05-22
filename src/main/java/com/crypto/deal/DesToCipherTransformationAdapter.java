@@ -12,7 +12,7 @@ public class DesToCipherTransformationAdapter implements CipherTransformation {
 
   @Override
   public Block transform(Block block, RoundKey roundKey) {
-    desCipher.setRoundKeys(new Key(roundKey.getKey()));
+    desCipher.setRoundKeys(new Key(roundKey.getData()));
     return desCipher.encryptBlock(block);
   }
 }

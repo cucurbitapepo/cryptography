@@ -13,7 +13,7 @@ public class DesCipherTransformation implements CipherTransformation {
   @Override
   public Block transform(Block block, RoundKey roundKey) {
     byte[] blockData = block.getData();
-    byte[] roundKeyData = roundKey.getKey();
+    byte[] roundKeyData = roundKey.getData();
     if (blockData.length != 4 || roundKeyData.length != 6) {
       throw new IllegalArgumentException("Invalid data or key length in Feistel F function");
     }
