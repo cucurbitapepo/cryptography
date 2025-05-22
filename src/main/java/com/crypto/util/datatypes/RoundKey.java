@@ -5,10 +5,10 @@ import lombok.Getter;
 public class RoundKey {
 
   @Getter
-  private byte[] key;
+  private byte[] data;
 
-  public RoundKey(byte[] key) {
-    this.key = key;
+  public RoundKey(byte[] data) {
+    this.data = data;
   }
 
 }

@@ -109,6 +109,27 @@ public class BitUtils {
     return result;
   }
 
+  public static byte[] concatenate(byte[][] data) {
+    int totalLength = 0;
+    for (byte[] array : data) {
+      if (array != null) {
+        totalLength += array.length;
+      }
+    }
+
+    byte[] result = new byte[totalLength];
+    int offset = 0;
+
+    for (byte[] array : data) {
+      if (array != null) {
+        System.arraycopy(array, 0, result, offset, array.length);
+        offset += array.length;
+      }
+    }
+
+    return result;
+  }
+
   /**
    * Устанавливает значение бита в указанной позиции в массиве байтов.
    *
@@ -124,5 +145,14 @@ public class BitUtils {
     } else {
       array[byteIndex] &= (byte) ~(1 << (7 - bitPosition));
     }
+  }
+
+  public static byte[] intToByteArray(int value) {
+    return new byte[] {
+            (byte) ((value >> 24) & 0xFF),
+            (byte) ((value >> 16) & 0xFF),
+            (byte) ((value >> 8) & 0xFF),
+            (byte) (value & 0xFF)
+    };
   }
 }
