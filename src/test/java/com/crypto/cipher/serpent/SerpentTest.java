@@ -51,8 +51,12 @@ class SerpentTest {
     assertArrayEquals(expectedResult, encryptedMessage.getData());
   }
 
-  @Test
-  void testEncryptDecryptMessage() { //fails
+  @ParameterizedTest
+  @MethodSource("provideEncryptionAndPaddingModesWithoutZeros")
+  void testEncryptDecryptMessage(
+          SymmetricCipherContext.EncryptionMode encryptionMode,
+          SymmetricCipherContext.PaddingMode paddingMode) { //fails on all modes but CFB, OFB, CTR
+    // here ZEROS mode is excluded due to plaintext being only zeroes itself
 
     byte[] keyBytes = new byte[]{
             (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
@@ -68,10 +72,10 @@ class SerpentTest {
 
     SymmetricCipherContext context = new SymmetricCipherContext(
             key,
-            SymmetricCipherContext.EncryptionMode.ECB,
-            SymmetricCipherContext.PaddingMode.ZEROS,
+            encryptionMode,
+            paddingMode,
             new SerpentCipher(),
-            new byte[8]
+            new byte[16]
     );
 
     Message message = new Message(messageBytes, 16);
@@ -79,6 +83,17 @@ class SerpentTest {
     Message decryptedMessage = context.decrypt(encryptedMessage);
 
     assertArrayEquals(message.getData(), decryptedMessage.getData());
+  }
+
+  private static Stream<Arguments> provideEncryptionAndPaddingModesWithoutZeros() {
+    return Stream.of(
+                    SymmetricCipherContext.EncryptionMode.values())
+            .filter(mode -> !mode.equals(SymmetricCipherContext.EncryptionMode.RANDOM_DELTA))
+            .flatMap(encryptionMode ->
+                    Stream.of(SymmetricCipherContext.PaddingMode.values())
+                            .filter(paddingMode -> !paddingMode.equals(SymmetricCipherContext.PaddingMode.ZEROS))
+                            .map(paddingMode -> Arguments.of(encryptionMode, paddingMode))
+            );
   }
 
   @ParameterizedTest
