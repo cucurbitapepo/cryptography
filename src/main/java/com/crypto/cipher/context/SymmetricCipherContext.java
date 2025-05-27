@@ -87,7 +87,7 @@ public class SymmetricCipherContext {
     }
 
     blocks = processWithMode(encryptionMode, blocks, Operation.DECRYPT);
-    Message decryptedMessage = new Message(blocks, 8);
+    Message decryptedMessage = new Message(blocks, blockSize);
     removePadding(decryptedMessage);
 
     return decryptedMessage;
