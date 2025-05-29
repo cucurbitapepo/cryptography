@@ -5,6 +5,7 @@ import com.crypto.util.BitUtils;
 import com.crypto.util.datatypes.Block;
 import com.crypto.util.datatypes.Key;
 import com.crypto.util.datatypes.Message;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.io.*;
@@ -26,6 +27,7 @@ public class SymmetricCipherContext {
   private final SymmetricCipher symmetricCipher;
 
   @Setter
+  @Getter
   private int blockSize;
 
   public enum EncryptionMode {

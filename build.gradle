@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    id 'maven-publish'
 }
 
-group = 'com'
-version = '1.0-SNAPSHOT'
+group = 'com.cucurbita'
+version = '1.1.0'
 
 repositories {
     mavenCentral()
@@ -25,4 +26,26 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId group
+            artifactId 'encryption'
+            version version
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/cucurbitapepo/cryptography")
+            credentials {
+                username = project.findProperty("gpr.user")?.toString() ?: System.getenv("GITHUB_USER")
+                password = project.findProperty("gpr.key")?.toString() ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }

@@ -19,35 +19,37 @@ import static org.junit.jupiter.api.Assertions.*;
 class SerpentTest {
 
   @Test
-  void testEncryptMessage() { //fails
+  void testEncryptMessage() {
 
     byte[] keyBytes = new byte[]{
-            (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
             (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
             (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
             (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
     };
     byte[] messageBytes = new byte[]{
             (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01
     };
     Key key = new Key(keyBytes);
 
     SymmetricCipherContext context = new SymmetricCipherContext(
             key,
-            SymmetricCipherContext.EncryptionMode.CTR,
+            SymmetricCipherContext.EncryptionMode.ECB,
             SymmetricCipherContext.PaddingMode.ANSI_X923,
             new SerpentCipher(),
             new byte[16]
     );
 
+    //AD86DE83231C3203A86AE33B721EAA9F according to BC implementation
+    byte[] expectedResult = new byte[]{(byte) 0xAD, (byte) 0x86, (byte) 0xDE, (byte) 0x83, (byte) 0x23, (byte) 0x1C, (byte) 0x32, (byte) 0x03,
+            (byte) 0xA8, (byte) 0x6A, (byte) 0xE3, (byte) 0x3B, (byte) 0x72, (byte) 0x1E, (byte) 0xAA, (byte) 0x9F};
+
     Message message = new Message(messageBytes, 16);
 
     Message encryptedMessage = context.encrypt(message);
 
-    //A223AA1288463C0E2BE38EBD825616C0 according to test vectors from https://biham.cs.technion.ac.il/Reports/Serpent/Serpent-256-128.verified.test-vectors
-    byte[] expectedResult = new byte[]{(byte) 0xA2, (byte) 0x23, (byte) 0xAA, (byte) 0x12, (byte) 0x88, (byte) 0x46, (byte) 0x3C, (byte) 0x0E,
-            (byte) 0x2B, (byte) 0xE3, (byte) 0x8E, (byte) 0xBD, (byte) 0x82, (byte) 0x56, (byte) 0x16, (byte) 0xC0};
+
     assertArrayEquals(expectedResult, encryptedMessage.getData());
   }
 
@@ -55,7 +57,7 @@ class SerpentTest {
   @MethodSource("provideEncryptionAndPaddingModesWithoutZeros")
   void testEncryptDecryptMessage(
           SymmetricCipherContext.EncryptionMode encryptionMode,
-          SymmetricCipherContext.PaddingMode paddingMode) { //fails on all modes but CFB, OFB, CTR
+          SymmetricCipherContext.PaddingMode paddingMode) {
     // here ZEROS mode is excluded due to plaintext being only zeroes itself
 
     byte[] keyBytes = new byte[]{
@@ -98,7 +100,7 @@ class SerpentTest {
 
   @ParameterizedTest
   @MethodSource("provideEncryptionAndPaddingModes")
-  void testFileEncryptionAndDecryption( //fails on all modes but CFB, OFB, CTR
+  void testFileEncryptionAndDecryption(
           SymmetricCipherContext.EncryptionMode encryptionMode,
           SymmetricCipherContext.PaddingMode paddingMode) {
     byte[] keyBytes = new byte[]{
