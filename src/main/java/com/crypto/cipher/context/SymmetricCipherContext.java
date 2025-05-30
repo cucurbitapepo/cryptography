@@ -28,6 +28,7 @@ public class SymmetricCipherContext {
   private final SymmetricCipher symmetricCipher;
 
   @Setter
+  @Getter
   private int blockSize;
 
   public enum EncryptionMode {

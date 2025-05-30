@@ -65,12 +65,71 @@ public class BitUtils {
     return result;
   }
 
+  public static byte[] shiftLeft(byte[] data, int shift, int startBit, int bitCount) {
+    if (shift < 0) {
+      throw new IllegalArgumentException("Shift value must be non-negative");
+    }
+
+    data = reverseArray(data);
+
+    BitSet bits = BitSet.valueOf(data);
+    int totalBits = data.length * 8;
+
+    BitSet shifted = new BitSet(totalBits);
+
+    int lowerBound = totalBits - bitCount - startBit;
+
+    for (int i = 0; i < bitCount; i++) {
+      int originalIndex = lowerBound + i;
+      int shiftedIndex = originalIndex + shift;
+
+      if (shiftedIndex < lowerBound + bitCount) {
+        shifted.set(shiftedIndex, bits.get(originalIndex));
+      }
+    }
+
+    byte[] result = new byte[(totalBits + 7) / 8];
+    for (int i = 0; i < totalBits; i++) {
+      if (shifted.get(i)) {
+        result[i / 8] |= (byte) (1 << (i % 8));
+      }
+    }
+
+    result = reverseArray(result);
+    return result;
+  }
+
+  public static int rotateLeft(int x, int bits) {
+    return (x << bits) | (x >>> -bits);
+  }
+
   public static byte[] xor(byte[] a, byte[] b) {
     byte[] result = new byte[a.length];
     for (int i = 0; i < a.length; i++) {
       result[i] = (byte) (a[i] ^ b[i]);
     }
     return result;
+  }
+
+  /**
+   * rearranges bytes in inverse order inside each 4-byte group
+   */
+  public static byte[] rearrangeBytes(byte[] input) {
+    if (input.length != 16) {
+      throw new IllegalArgumentException("Input array must have exactly 16 bytes");
+    }
+
+    byte[] output = new byte[16];
+
+    for (int i = 0; i < 4; i++) {
+      int groupStart = i * 4;
+      output[groupStart] = input[groupStart + 3];
+      output[groupStart + 1] = input[groupStart + 2];
+      output[groupStart + 2] = input[groupStart + 1];
+      output[groupStart + 3] = input[groupStart];
+    }
+
+    return output;
   }
 
   /**
@@ -147,12 +206,49 @@ public class BitUtils {
     }
   }
 
+  public static int[] byteArrayToIntArray(byte[] byteArray) {
+    if (byteArray.length % 4 != 0) {
+      throw new IllegalArgumentException("Input array length must be a multiple of 4");
+    }
+    int length = byteArray.length / 4;
+    int[] intArray = new int[length];
+
+    for (int i = 0; i < length; i++) {
+      int offset = i * 4;
+      intArray[i] = ((byteArray[offset] & 0xFF) << 24) |
+                    ((byteArray[offset + 1] & 0xFF) << 16) |
+                    ((byteArray[offset + 2] & 0xFF) << 8) |
+                    (byteArray[offset + 3] & 0xFF);
+    }
+
+    return intArray;
+  }
+
+  public static byte[] intArrayToByteArray(int[] ints) {
+    byte[] byteArray = new byte[ints.length * 4];
+    for (int i = 0; i < ints.length; i++) {
+      byteArray[i * 4] = (byte) (ints[i] >> 24);
+      byteArray[i * 4 + 1] = (byte) (ints[i] >> 16);
+      byteArray[i * 4 + 2] = (byte) (ints[i] >> 8);
+      byteArray[i * 4 + 3] = (byte) (ints[i]);
+    }
+    return byteArray;
+  }
+
   public static byte[] intToByteArray(int value) {
-    return new byte[] {
+    return new byte[]{
             (byte) ((value >> 24) & 0xFF),
             (byte) ((value >> 16) & 0xFF),
             (byte) ((value >> 8) & 0xFF),
             (byte) (value & 0xFF)
     };
+  }
+
+  public static int littleEndianToInt(byte[] bs, int off) {
+    int n = bs[off] & 0xff;
+    n |= (bs[++off] & 0xff) << 8;
+    n |= (bs[++off] & 0xff) << 16;
+    n |= bs[++off] << 24;
+    return n;
   }
 }

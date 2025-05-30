@@ -1,7 +1,6 @@
 package com.crypto.serpent;
 
 import com.crypto.cipher.SubstitutionPermutationNetwork;
-import com.crypto.util.BitPermutor;
 import com.crypto.util.BitUtils;
 import com.crypto.util.datatypes.Block;
 import com.crypto.util.datatypes.RoundKey;
@@ -26,27 +25,16 @@ public class SerpentCipher extends SubstitutionPermutationNetwork {
       throw new IllegalArgumentException("Block data length must be 16 bytes");
     }
 
-    byte[] permutedData = BitPermutor.permuteBits(
-            blockData,
-            IP,
-            BitPermutor.BitOrder.MostSignificantToLeastSignificant,
-            BitPermutor.StartingBitIndex.ONE
-    );
+    blockData = BitUtils.rearrangeBytes(blockData);
 
-    block = super.encryptBlock(new Block(permutedData));
+    block = super.encryptBlock(new Block(blockData));
 
     blockData = block.getData();
 
     blockData = performAdditionalRound(blockData, Operation.ENCRYPTION);
+    blockData = BitUtils.rearrangeBytes(blockData);
 
-    permutedData = BitPermutor.permuteBits(
-            blockData,
-            FP,
-            BitPermutor.BitOrder.MostSignificantToLeastSignificant,
-            BitPermutor.StartingBitIndex.ONE
-    );
-
-    return new Block(permutedData);
+    return new Block(blockData);
   }
 
   @Override
@@ -56,45 +44,35 @@ public class SerpentCipher extends SubstitutionPermutationNetwork {
       throw new IllegalArgumentException("Block data length must be 16 bytes");
     }
 
-    byte[] permutedData = BitPermutor.permuteBits(
-            blockData,
-            IP,
-            BitPermutor.BitOrder.MostSignificantToLeastSignificant,
-            BitPermutor.StartingBitIndex.ONE
-    );
+    blockData = BitUtils.rearrangeBytes(blockData);
 
-    permutedData = performAdditionalRound(permutedData, Operation.DECRYPTION);
+    blockData = performAdditionalRound(blockData, Operation.DECRYPTION);
 
-    block = super.decryptBlock(new Block(permutedData));
+    block = super.decryptBlock(new Block(blockData));
 
     blockData = block.getData();
+    blockData = BitUtils.rearrangeBytes(blockData);
 
-    permutedData = BitPermutor.permuteBits(
-            blockData,
-            FP,
-            BitPermutor.BitOrder.MostSignificantToLeastSignificant,
-            BitPermutor.StartingBitIndex.ONE
-    );
-
-    return new Block(permutedData);
+    return new Block(blockData);
   }
 
   private byte[] performAdditionalRound(byte[] block, Operation operation) {
     return switch (operation) {
-      case ENCRYPTION -> perfromAdditionalEncryptionRound(block);
-      case DECRYPTION -> perfromAdditionalDecryptionRound(block);
+      case ENCRYPTION -> performAdditionalEncryptionRound(block);
+      case DECRYPTION -> performAdditionalDecryptionRound(block);
     };
   }
 
-  private byte[] perfromAdditionalEncryptionRound(byte[] block) {
+  private byte[] performAdditionalEncryptionRound(byte[] block) {
     block = applyKey(block, super.getRoundKeys()[31]);
     block = substituteEncryption(block, 31);
-    return applyKey(block, super.getRoundKeys()[32]);
+    block = applyKey(block, super.getRoundKeys()[32]);
+    return block;
   }
 
-  private byte[] perfromAdditionalDecryptionRound(byte[] block) {
+  private byte[] performAdditionalDecryptionRound(byte[] block) {
     block = applyKey(block, super.getRoundKeys()[32]);
-    block = substituteEncryption(block, 31);
+    block = substituteDecryption(block, 31);
     return applyKey(block, super.getRoundKeys()[31]);
   }
 
@@ -107,25 +85,16 @@ public class SerpentCipher extends SubstitutionPermutationNetwork {
   }
 
   private byte[] substituteEncryption(byte[] data, int roundIndex) {
-    byte[] result = new byte[16];
-    for(int i = 0; i < 32; i++) {
-      byte currentByte = data[i/2];
-      int shiftInsideByte = i % 2 * 4;
-      result[i/2] |= (byte) (S[roundIndex % 8][((currentByte & 0xff & (0x0F << shiftInsideByte)) >> shiftInsideByte)] << shiftInsideByte);
-    }
+    int[] roundKeyInts = BitUtils.byteArrayToIntArray(data);
+    int[] X = applySBox(roundIndex % 8, roundKeyInts[0], roundKeyInts[1], roundKeyInts[2], roundKeyInts[3]);
+    return BitUtils.intArrayToByteArray(X);
 
-    return result;
   }
 
   private byte[] substituteDecryption(byte[] data, int roundIndex) {
-    byte[] result = new byte[16];
-    for(int i = 0; i < 32; i++) {
-      byte currentByte = data[i/2];
-      int shiftInsideByte = i % 2 * 4;
-      result[i/2] |= (byte) (SInverse[roundIndex % 8][((currentByte & 0xff & (0x0F << shiftInsideByte)) >> shiftInsideByte)] << shiftInsideByte);
-    }
-
-    return result;
+    int[] roundKeyInts = BitUtils.byteArrayToIntArray(data);
+    int[] X = applyInvSBox(roundIndex % 8, roundKeyInts[0], roundKeyInts[1], roundKeyInts[2], roundKeyInts[3]);
+    return BitUtils.intArrayToByteArray(X);
   }
 
   /**
@@ -149,11 +118,11 @@ public class SerpentCipher extends SubstitutionPermutationNetwork {
     X[0] = BitUtils.rotateLeft(X[0], 13, 0, 32);
     X[2] = BitUtils.rotateLeft(X[2], 3, 0, 32);
     X[1] = BitUtils.xor(X[1], BitUtils.xor(X[0], X[2]));
-    X[3] = BitUtils.xor(X[3], BitUtils.xor(X[2], BitUtils.rotateLeft(X[0], 3, 0, 32)));
+    X[3] = BitUtils.xor(X[3], BitUtils.xor(X[2], BitUtils.shiftLeft(X[0], 3, 0, 32)));
     X[1] = BitUtils.rotateLeft(X[1], 1, 0, 32);
     X[3] = BitUtils.rotateLeft(X[3], 7, 0, 32);
     X[0] = BitUtils.xor(X[0], BitUtils.xor(X[1], X[3]));
-    X[2] = BitUtils.xor(X[2], BitUtils.xor(X[3], BitUtils.rotateLeft(X[1], 7, 0, 32)));
+    X[2] = BitUtils.xor(X[2], BitUtils.xor(X[3], BitUtils.shiftLeft(X[1], 7, 0, 32)));
     X[0] = BitUtils.rotateLeft(X[0], 5, 0, 32);
     X[2] = BitUtils.rotateLeft(X[2], 22, 0, 32);
 
@@ -168,11 +137,11 @@ public class SerpentCipher extends SubstitutionPermutationNetwork {
 
     X[2] = BitUtils.rotateLeft(X[2], -22, 0, 32);
     X[0] = BitUtils.rotateLeft(X[0], -5, 0, 32);
-    X[2] = BitUtils.xor(X[2], BitUtils.xor(X[3], BitUtils.rotateLeft(X[1], 7, 0, 32)));
+    X[2] = BitUtils.xor(X[2], BitUtils.xor(X[3], BitUtils.shiftLeft(X[1], 7, 0, 32)));
     X[0] = BitUtils.xor(X[0], BitUtils.xor(X[1], X[3]));
     X[3] = BitUtils.rotateLeft(X[3], -7, 0, 32);
     X[1] = BitUtils.rotateLeft(X[1], -1, 0, 32);
-    X[3] = BitUtils.xor(X[3], BitUtils.xor(X[2], BitUtils.rotateLeft(X[0], 3, 0, 32)));
+    X[3] = BitUtils.xor(X[3], BitUtils.xor(X[2], BitUtils.shiftLeft(X[0], 3, 0, 32)));
     X[1] = BitUtils.xor(X[1], BitUtils.xor(X[0], X[2]));
     X[2] = BitUtils.rotateLeft(X[2], -3, 0, 32);
     X[0] = BitUtils.rotateLeft(X[0], -13, 0, 32);
