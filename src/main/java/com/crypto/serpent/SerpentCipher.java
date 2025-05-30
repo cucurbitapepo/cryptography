@@ -15,6 +15,11 @@ public class SerpentCipher extends SubstitutionPermutationNetwork {
   }
 
   @Override
+  public int getBlockSize() {
+    return 16;
+  }
+
+  @Override
   public Block encryptBlock(Block block) {
     byte[] blockData = block.getData();
     if (blockData.length != 16) {

@@ -10,4 +10,6 @@ public interface SymmetricCipher {
   Block decryptBlock(Block block);
 
   void setRoundKeys(Key key);
+
+  int getBlockSize();
 }

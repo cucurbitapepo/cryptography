@@ -14,6 +14,11 @@ public class DesCipher extends FeistelNetwork {
   }
 
   @Override
+  public int getBlockSize() {
+    return 8;
+  }
+
+  @Override
   public Block encryptBlock(Block block) {
     byte[] blockData = block.getData();
     if (blockData.length != 8) {

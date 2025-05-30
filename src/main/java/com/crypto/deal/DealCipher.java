@@ -10,6 +10,11 @@ public class DealCipher extends FeistelNetwork {
   }
 
   @Override
+  public int getBlockSize() {
+    return 16;
+  }
+
+  @Override
   public Block encryptBlock(Block block) {
     if (block.getData().length != 16) {
       throw new IllegalArgumentException("Block data length must be 16 bytes");

@@ -5,6 +5,7 @@ import com.crypto.util.BitUtils;
 import com.crypto.util.datatypes.Block;
 import com.crypto.util.datatypes.Key;
 import com.crypto.util.datatypes.Message;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.io.*;
@@ -23,6 +24,7 @@ public class SymmetricCipherContext {
   private final PaddingMode paddingMode;
   private final Key key;
 
+  @Getter
   private final SymmetricCipher symmetricCipher;
 
   @Setter
@@ -67,7 +69,7 @@ public class SymmetricCipherContext {
   }
 
   public Message encrypt(Message toEncrypt) {
-    blockSize = toEncrypt.getBlockSize();
+    blockSize = (toEncrypt.getBlockSize() <= 0) ? symmetricCipher.getBlockSize() : toEncrypt.getBlockSize();
 
     Message message = new Message(toEncrypt);
 
@@ -78,7 +80,7 @@ public class SymmetricCipherContext {
   }
 
   public Message decrypt(Message toDecrypt) {
-    blockSize = toDecrypt.getBlockSize();
+    blockSize = (toDecrypt.getBlockSize() <= 0) ? symmetricCipher.getBlockSize() : toDecrypt.getBlockSize();
     Message message = new Message(toDecrypt);
 
     Block[] blocks = message.getBlocks();

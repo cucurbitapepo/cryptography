@@ -5,9 +5,11 @@ import com.crypto.cipher.transformation.CipherTransformation;
 import com.crypto.util.datatypes.Block;
 import com.crypto.util.datatypes.Key;
 import com.crypto.util.datatypes.RoundKey;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 
+@Slf4j
 public class FeistelNetwork implements SymmetricCipher {
 
   public enum Operation {
@@ -70,5 +72,11 @@ public class FeistelNetwork implements SymmetricCipher {
       result[i] = (byte) (a.getData()[i] ^ b.getData()[i]);
     }
     return new Block(result);
+  }
+
+  @Override
+  public int getBlockSize() {
+    log.warn("getBlockSize was called on FeistelNetwork, returning 2");
+    return 2;
   }
 }

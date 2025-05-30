@@ -18,6 +18,11 @@ public abstract class SubstitutionPermutationNetwork implements SymmetricCipher{
   private final int rounds;
   private final int blockSize;
 
+  @Override
+  public int getBlockSize() {
+    return blockSize;
+  }
+
   protected SubstitutionPermutationNetwork(KeyExpansion keyExpansion, int rounds, int blockSize) {
     this.keyExpansion = keyExpansion;
     this.rounds = rounds;
