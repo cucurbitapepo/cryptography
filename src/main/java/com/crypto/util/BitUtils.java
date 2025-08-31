@@ -224,6 +224,24 @@ public class BitUtils {
     return intArray;
   }
 
+  public static int[] byteArrayToLittleEndianArray(byte[] byteArray) {
+    if (byteArray.length % 4 != 0) {
+      throw new IllegalArgumentException("Input array length must be a multiple of 4");
+    }
+    int length = byteArray.length / 4;
+    int[] intArray = new int[length];
+
+    for (int i = 0; i < length; i++) {
+      int offset = i * 4;
+      intArray[i] = ((byteArray[offset] & 0xFF)) |
+                    ((byteArray[offset + 1] & 0xFF) << 8) |
+                    ((byteArray[offset + 2] & 0xFF) << 16) |
+                    ((byteArray[offset + 3] & 0xFF) << 24);
+    }
+
+    return intArray;
+  }
+
   public static byte[] intArrayToByteArray(int[] ints) {
     byte[] byteArray = new byte[ints.length * 4];
     for (int i = 0; i < ints.length; i++) {
@@ -234,6 +252,16 @@ public class BitUtils {
     }
     return byteArray;
   }
+  public static byte[] littleEndianArrayToByteArray(int[] ints) {
+    byte[] byteArray = new byte[ints.length * 4];
+    for (int i = 0; i < ints.length; i++) {
+      byteArray[i * 4] = (byte) (ints[i]);
+      byteArray[i * 4 + 1] = (byte) (ints[i] >> 8);
+      byteArray[i * 4 + 2] = (byte) (ints[i] >> 16);
+      byteArray[i * 4 + 3] = (byte) (ints[i] >> 24);
+    }
+    return byteArray;
+  }
 
   public static byte[] intToByteArray(int value) {
     return new byte[]{
@@ -241,6 +269,15 @@ public class BitUtils {
             (byte) ((value >> 16) & 0xFF),
             (byte) ((value >> 8) & 0xFF),
             (byte) (value & 0xFF)
+    };
+  }
+
+  public static byte[] littleEndianToByteArray(int value) {
+    return new byte[]{
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF),
+            (byte) ((value >> 16) & 0xFF),
+            (byte) ((value >> 24) & 0xFF)
     };
   }
 

@@ -16,9 +16,9 @@ public class FeistelNetwork implements SymmetricCipher {
     ENCRYPTION, DECRYPTION
   }
 
-  private final CipherTransformation cipherTransformation;
+  protected final CipherTransformation cipherTransformation;
   private final KeyExpansion keyExpansion;
-  private RoundKey[] roundKeys;
+  protected RoundKey[] roundKeys;
 
   public FeistelNetwork(CipherTransformation cipherTransformation, KeyExpansion keyExpansion) {
     this.cipherTransformation = cipherTransformation;
