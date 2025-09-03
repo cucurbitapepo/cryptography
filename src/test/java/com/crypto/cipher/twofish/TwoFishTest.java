@@ -137,7 +137,6 @@ class TwoFishTest {
   private static Stream<Arguments> provideEncryptionAndPaddingModes() {
     return Stream.of(
                     SymmetricCipherContext.EncryptionMode.values())
-            .filter(mode -> !mode.equals(SymmetricCipherContext.EncryptionMode.RANDOM_DELTA))
             .flatMap(encryptionMode ->
                     Stream.of(SymmetricCipherContext.PaddingMode.values())
                             .map(paddingMode -> Arguments.of(encryptionMode, paddingMode))

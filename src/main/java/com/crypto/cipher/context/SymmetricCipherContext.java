@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -307,8 +308,51 @@ public class SymmetricCipherContext {
             toArray(Block[]::new);
   }
 
+  private byte[] ensureLength(byte[] input, int targetLength) {
+    if (input.length >= targetLength) {
+      return Arrays.copyOf(input, targetLength);
+    } else {
+      byte[] result = new byte[targetLength];
+      System.arraycopy(input, 0, result, targetLength - input.length, input.length);
+      return result;
+    }
+  }
+
+  private byte[] generateKeystreamBlock(byte[] iv, BigInteger delta, int index) {
+    BigInteger init = new BigInteger(1, iv); // положительное число
+    BigInteger keystreamValue = init.add(delta.multiply(BigInteger.valueOf(index)));
+    byte[] rawBytes = keystreamValue.toByteArray();
+    return ensureLength(rawBytes, blockSize);
+  }
+
   private Block[] processWithRandomDelta(Block[] blocks, Operation operation) {
-    throw new UnsupportedOperationException("actually have no idea what this supposed to do :(");
+
+    if (initializationVector == null || initializationVector.length != blockSize) {
+      throw new IllegalStateException("Initialization vector must be present and match block size");
+    }
+
+    int half = blockSize / 2;
+    byte[] deltaBytes = Arrays.copyOfRange(initializationVector, half, blockSize);
+    BigInteger delta = new BigInteger(1, deltaBytes);
+
+    return Arrays.stream(blocks)
+            .parallel()
+            .map(block -> {
+              int index = Arrays.asList(blocks).indexOf(block);
+              byte[] keystream = generateKeystreamBlock(initializationVector, delta, index);
+              byte[] data = block.getData();
+
+              byte[] processed;
+              if (operation == Operation.ENCRYPT) {
+                byte[] xorWithKeystream = BitUtils.xor(data, keystream);
+                processed = symmetricCipher.encryptBlock(new Block(xorWithKeystream)).getData();
+              } else {
+                byte[] decrypted = symmetricCipher.decryptBlock(new Block(data)).getData();
+                processed = BitUtils.xor(decrypted, keystream);
+              }
+              return new Block(processed);
+            })
+            .toArray(Block[]::new);
   }
 
   public CompletableFuture<Void> encrypt(String sourceFilePath, String encryptedFilePath) {
